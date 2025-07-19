@@ -108,8 +108,8 @@
                     </div>
 
                     <h3>⛓️‍💥 Why Discrete Diffusion for LLMs?</h3>
-                    <p>Modern large‐scale LLMs almost universally use <strong>autoregressive (AR)</strong> decoding-predicting one token at a time in strict left-to-right order. While AR yields high local fidelity, it is subject to error accumulation and enforces $L$ sequential denoiser calls for a length-$L$ output, under-utilizing today's massively parallel hardware.</p>
-                    
+                    <p>Modern large‐scale LLMs almost universally use <strong>autoregressive (AR)</strong> decoding-predicting one token at a time in strict left-to-right order. While AR yields high local fidelity, it is subject to error accumulation and enforces $G$ sequential denoiser calls for a length-$G$ output, under-utilizing today's massively parallel hardware.</p>
+
                     <p>By contrast, <strong>masked diffusion</strong> treats the entire sequence as a latent "noisy" mask and gradually unmasks tokens over a small number of denoising passes. In principle this supports <strong>any-order token revelations</strong> and <strong>fully parallel updates</strong>-trading off the number of passes (and thus latency) against generation fidelity.</p>
 
                     <hr style="border: 1px solid var(--border-light); margin: 30px 0;">
