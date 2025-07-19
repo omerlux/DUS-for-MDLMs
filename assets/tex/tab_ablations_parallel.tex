@@ -1,0 +1,31 @@
+\begin{table}[!t]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{0.9}
+  \caption{Planners parallelism ablation on GSM8K (300 samples, $G=256$), comparing self‐confidence (Conf.) vs.\ random planners under two unmasking schedules: fixed-$k$ and dilated-incremental (Inc., as in DUS). Accuracy (\%) is shown for both base and instruct LLaDA models at $B=\{16,32\}$. Best scores are \textbf{bold}, second-best are \underline{underlined}.}
+  \label{tab:planners_ablation}
+
+  \begin{tabular}{l c cc cc c}
+    \toprule
+    \bfseries Model 
+      & \bfseries Block 
+      & \multicolumn{2}{c}{\bfseries Conf.} 
+      & \multicolumn{2}{c}{\bfseries Random} 
+      & \bfseries DUS \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+      &  
+      & fixed & inc. 
+      & fixed & inc. 
+      & inc. \\
+    \midrule
+    Base  
+      & 16 & \underline{55.00} & 49.33 & 24.67 & 43.67 & \textbf{61.33} \\
+      & 32 & 30.67 & 25.00 & 10.00 & \underline{39.00} & \textbf{48.33} \\
+    \midrule
+    Instruct  
+      & 16 & \underline{62.33} & 47.67 & 40.00 & 61.33 & \textbf{71.67} \\
+      & 32 & 39.67 & 23.67 & 23.33 & \underline{53.67} & \textbf{66.67} \\
+    \bottomrule
+  \end{tabular}
+\end{table}

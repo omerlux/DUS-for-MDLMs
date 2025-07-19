@@ -1,0 +1,61 @@
+\begin{table*}[ht]
+\centering
+\caption{Math (GSM8K, MATH500) and Code (Humaneval, MBPP) benchmarks for self-confidence (Conf.) and DUS (ours). Tasks reported accuracy (\%) for math and pass@1 for code, at block sizes $B=\{8,16,32,64\}$, with corresponding speedup factor $(\times)$. Diffucoder is tested only on code benchmarks; Humaneval, and MBPP.
+\textbf{Bold} marks better scores.}
+\small
+\begin{tabular}{l l *{4}{cc}}
+\toprule
+% 1) B sizes
+ & \multirow{3}{*}{\textbf{Model}}
+   & \multicolumn{2}{c}{$\textbf{B=8 }$}
+   & \multicolumn{2}{c}{$\textbf{B=16}$}
+   & \multicolumn{2}{c}{$\textbf{B=32}$}
+   & \multicolumn{2}{c}{$\textbf{B=64}$} \\
+% 2) ×‐rates
+ & 
+   & \multicolumn{2}{c}{$\times \textbf{2.7} $ }
+   & \multicolumn{2}{c}{$\times \textbf{4}   $   }
+   & \multicolumn{2}{c}{$\times \textbf{6.4} $ }
+   & \multicolumn{2}{c}{$\times \textbf{10.7}$} \\
+% 3) Conf. vs DUS
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+ & 
+   & Conf. & DUS 
+   & Conf. & DUS 
+   & Conf. & DUS 
+   & Conf. & DUS \\
+\midrule
+% now the data rows
+\multirow{3}{*}{\rotatebox[origin=c]{0}{{GSM8K}}}
+ & LLaDA–Base        & 59.29 & \textbf{63.08} & 51.23 & \textbf{59.51} & 29.04 & \textbf{49.36} &  8.04 & \textbf{35.18} \\
+ & LLaDA–Instruct    & 69.22 & \textbf{73.24} & 61.41 & \textbf{70.66} & 38.74 & \textbf{65.73} & 18.73 & \textbf{57.09} \\
+ & Dream–Instruct    & 61.64 & \textbf{65.28} & 53.22 & \textbf{56.63} & 27.60 & \textbf{44.66} & 17.89 & \textbf{32.07} \\
+\midrule
+% now the data rows
+\multirow{3}{*}{\rotatebox[origin=c]{0}{{MATH500}}}
+ & LLaDA–Base        & 16.6 & \textbf{21.4} & 11.2 & \textbf{19.2} &  6.0 & \textbf{13.6} & 2.6    & \textbf{10.2} \\
+ & LLaDA–Instruct    & 21.4 & \textbf{23.8} & 15.4 & \textbf{22.8} & 10.8 & \textbf{19.2} & 8.0    & \textbf{14.8} \\
+ & Dream–Instruct    & 22.4 & \textbf{27.0} & 15.4 & \textbf{19.8} &  7.2 & \textbf{13.2} & 4.0    & \textbf{11.6} \\
+\midrule
+% now the data rows
+\multirow{5}{*}{\rotatebox[origin=c]{0}{{Humaneval}}}
+ & LLaDA–Base           & 15.85	&	\textbf{25.61}	&	12.8	&	\textbf{19.51}	&	4.88	        &	\textbf{14.02}	&	4.88	&	\textbf{ 6.71} \\
+ & LLaDA–Instruct       & 21.95	&	\textbf{28.05}	&	14.02	&	\textbf{23.17}	&	9.76	        &	\textbf{10.37}	&	10.98	&	\textbf{11.59} \\
+ & Dream–Instruct       & 8.54	&	\textbf{14.63}	&	5.49	&	\textbf{11.59}	&	\textbf{6.71}	&	\textbf{ 6.71}	&	6.10    &	\textbf{ 9.15} \\
+ & DiffuCoder–Base      & 17.07  &	\textbf{28.66}	&	6.71	&	\textbf{38.41}	&	2.44	        &	\textbf{21.95}	&	0.61    &	\textbf{6.10}  \\
+ & DiffuCoder–Instruct  & 7.93	&	\textbf{22.56}  &	14.02	&	\textbf{20.12}	&	\textbf{13.41}	&	12.80	        &	11.59   &	\textbf{8.54} \\
+\midrule
+% now the data rows
+\multirow{5}{*}{\rotatebox[origin=c]{0}{{MBPP}}}
+ & LLaDA–Base           & 19.8	&	\textbf{30.4}	&	12.8	&	\textbf{31.6}	&	8.2	   &	\textbf{22.6}	&	3.4	    &  	\textbf{14.4} \\
+ & LLaDA–Instruct       & 25.4	&	\textbf{33.6}	&	17.6	&	\textbf{31.8}	&	14.0	   &	\textbf{23.2}	&	11.4	&	\textbf{18.6} \\
+ & Dream–Instruct       & 32.8	&	\textbf{45.0}   &	23.8	&	\textbf{40.8}	&	16.4   &	\textbf{26.6}	&	11.8	&	\textbf{22.2} \\
+ & DiffuCoder–Base      & 29.2	&	\textbf{48.6}   &	17.4    &	\textbf{43.0}	&	10.2   &	\textbf{27.4}	&	3.4    &	\textbf{17.2} \\
+ & DiffuCoder–Instruct  & -	    &	-	            &	25.6    &	\textbf{43.6}   &	21.0	   &	\textbf{26.6}	&	13.0   &	\textbf{18.2} \\
+\bottomrule
+\end{tabular}
+\label{tab:experiments_math_code}
+\end{table*}
+
+
+

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan for Speed: Dilated Scheduling for Masked Diffusion Language Models</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Computer+Modern:wght@400;700&family=Latin+Modern+Math&display=swap" rel="stylesheet">
+    <!-- MathJax for math rendering -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <!-- Header spanning full width -->
+    <header class="paper-header" id="header">
+        <div class="header-content">
+            <h1>Plan for Speed: Dilated Scheduling for Masked Diffusion Language Models</h1>
+            <div class="affiliation-unified">
+                School of Electrical and Computer Engineering<br>
+                Ben-Gurion University of the Negev
+            </div>
+            <div class="authors">
+                <span class="author">
+                    <strong>Omer Luxembourg</strong><br>
+                    <a href="mailto:omerlux@post.bgu.ac.il">omerlux@post.bgu.ac.il</a>
+                </span>
+                <span class="author">
+                    <strong>Haim Permuter</strong><br>
+                    <a href="mailto:haimp@bgu.ac.il">haimp@bgu.ac.il</a>
+                </span>
+                <span class="author">
+                    <strong>Eliya Nachmani</strong><br>
+                    <a href="mailto:eliyanac@bgu.ac.il">eliyanac@bgu.ac.il</a>
+                </span>
+            </div>
+            <div class="paper-links">
+                <a href="https://arxiv.org/abs/2506.19037" class="paper-link">
+                    📄 Read the Paper
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content with sidebar navigation -->
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar-nav">
+            <h3>Navigation</h3>
+            <ul>
+                <li><a href="#header">Paper</a></li>
+                <li><a href="#abstract">Abstract</a></li>
+                <li><a href="#method">Diffusion LMs & DUS</a></li>
+                <li><a href="#interactive-demos">Demos</a></li>
+                <li><a href="#benchmarks">Benchmarks</a></li>
+                <li><a href="#bibtex">BibTeX</a></li>
+            </ul>
+            <div class="animation-toggle">
+                <label class="toggle-label">
+                    <input type="checkbox" id="diffusion-toggle" checked>
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Diffusion Effect</span>
+                </label>
+            </div>
+        </nav>
+
+        <!-- Main content area -->
+        <main class="content">
+            <section id="abstract" class="scroll-animate">
+                <h2 style="text-align: center;">Abstract</h2>
+                <div class="abstract">
+                    <p>Masked diffusion language models (MDLMs) promise fast, non-autoregressive text generation, yet existing samplers, which pick tokens to unmask based on model confidence, ignore interactions when unmasking multiple positions in parallel and effectively reduce to slow, autoregressive behavior. 
+                    We propose the Dilated Unmasking Scheduler (DUS), an inference-only, planner-model-free method that partitions sequence positions into non-adjacent dilated groups and unmasked them in parallel so as to minimize an upper bound on joint entropy gain at each denoising step. By explicitly trading off the number of network calls against generation quality, DUS recovers most of the performance lost under traditional parallel unmasking strategies. 
+                    Across math (GSM8K, MATH500), code (HumanEval, MBPP) and general‐knowledge benchmarks (BBH, MMLU-Pro), DUS outperforms confidence‐based planners-without modifying the underlying denoiser, and reveals the true speed-quality frontier of MDLMs.</p>
+                </div>
+            </section>
+
+            <section id="method" class="scroll-animate">
+                <h2 style="text-align: center;">Diffusion LMs & Dilated Unmasking Scheduler (DUS)</h2>
+                
+                <div class="content-block">
+                    <div class="examples-grid">
+                        <figure>
+                            <figcaption style="caption-side: top; text-align: center;">DUS Planner</figcaption>
+                            <img src="assets/imgs/llada-base_gsm8k_452_dus.png" alt="GSM8K example under DUS planner">
+                        </figure>
+                        <figure>
+                            <figcaption style="caption-side: top; text-align: center;">Self-Confidence Planner</figcaption>
+                            <img src="assets/imgs/llada-base_gsm8k_452_conf.png" alt="GSM8K example under Self-Confidence planner">
+                        </figure>
+                    </div>
+                    <div class="colorbar-container">
+                        <img src="assets/imgs/generation_bar.png" alt="Generation colorbar">
+                        <div class="colorbar-label">Generation: Start → End</div>
+                    </div>
+
+                    <h3>⛓️‍💥 Why Discrete Diffusion for LLMs?</h3>
+                    <p>Modern large‐scale LLMs almost universally use <strong>autoregressive (AR)</strong> decoding-predicting one token at a time in strict left-to-right order. While AR yields high local fidelity, it is subject to error accumulation and enforces $L$ sequential denoiser calls for a length-$L$ output, under-utilizing today's massively parallel hardware.</p>
+                    
+                    <p>By contrast, <strong>masked diffusion</strong> treats the entire sequence as a latent "noisy" mask and gradually unmasks tokens over a small number of denoising passes. In principle this supports <strong>any-order token revelations</strong> and <strong>fully parallel updates</strong>-trading off the number of passes (and thus latency) against generation fidelity.</p>
+
+                    <hr style="border: 1px solid var(--border-light); margin: 30px 0;">
+
+                    <h3>🔎 The AR-Equivalent "Planner"</h3>
+                    <p>Almost all existing diffusion samplers collapse back to AR speed and quality by <strong>unmasking one token per step</strong>, using denoiser confidence or entropy to pick the next index. In effect, the denoiser becomes an <strong>implicit planner</strong>, but it still:</p>
+                    <ul>
+                        <li><strong>Ignores interactions</strong> between multiple tokens unmasked in the same step.</li>
+                        <li><strong>Fails to account</strong> for how revealing $x_i$ would change the uncertainty of $x_j$ if both are revealed together.</li>
+                    </ul>
+                    <p>As soon as you try to unmask more than one token at once, quality plummets.</p>
+
+                    <hr style="border: 1px solid var(--border-light); margin: 30px 0;">
+
+                    <h3>⏱️ Our Dilated Unmasking Scheduler (DUS)</h3>
+                    <p>We introduce <strong>DUS</strong>, a <strong>model-agnostic</strong>, <strong>planner-model-free</strong> inference scheduler that requires <strong>no extra training</strong> or changes to the denoiser.</p>
+
+                    <h4>1. Dilated Partitioning</h4>
+                    <ul>
+                        <li>Let $G$ be the sequence length. Set
+                            $$K = \lceil\log G\rceil \text{ and } \{C_1, \ldots, C_K\}$$
+                            be a partition of the $G$ positions into $K$ <strong>non-adjacent</strong> groups.
+                        </li>
+                        <li>Each candidate group $C_k$ has on average $\frac{G}{K}$ tokens with <strong>minimal pairwise dependencies</strong>.</li>
+                    </ul>
+
+                    <h4>2. Parallel Unmasking</h4>
+                    <p>For $k = 1, \ldots, K$:</p>
+                    <ol>
+                        <li>Unmask <strong>all</strong> tokens in $C_k$ simultaneously.</li>
+                        <li>Run one pass of the denoiser over the full sequence.</li>
+                    </ol>
+
+                    <h4>3. Entropy-Bound Justification</h4>
+                    <p>Denote by $s_t$ the current partial state at iteration $t$ (i.e., which tokens have already been revealed and which remain masked). Under a <strong>one-order fast-mixing Markov chain</strong> on token positions, non-adjacent tokens exhibit negligible mutual information, so</p>
+                    $$H(x_{C_k} | s_t) \leq \sum_{i \in C_k} H(x_i | s_t)$$
+                    <p>Hence, grouping <strong>non-adjacent</strong> tokens in each $C_k$ <strong>controls the maximum quality loss</strong> per unmasking step.</p>
+
+                    <h4>4. Speed–Quality Trade-off</h4>
+                    <ul>
+                        <li><strong>AR baseline:</strong> $G$ denoiser calls (one per token).</li>
+                        <li><strong>DUS:</strong> $K = \lceil\log G\rceil$ calls ⇒ $\approx \frac{G}{\log G}$× speedup.</li>
+                        <li><strong>Empirical result:</strong> DUS preserves <strong>up to 25%</strong> of quality even at <strong>5×–10×</strong> fewer passes.</li>
+                    </ul>
+
+                    <hr style="border: 1px solid var(--border-light); margin: 30px 0;">
+
+                    <p class="conclusion">By explicitly managing the <strong>number of unmasking steps</strong> via a <strong>dilated schedule</strong>, DUS uncovers the true <strong>speed–quality frontier</strong> of masked diffusion LMs-delivering <strong>sub-linear</strong>, <strong>any-order</strong> generation at practical fidelity.</p>
+                </div>
+            </section>
+
+            <section id="interactive-demos" class="scroll-animate">
+                <h2 style="text-align: center;">Interactive Demos</h2>
+
+                <div class="content-block">
+                    <p>Explore step-by-step unmasking and see how DUS vs. confidence planners work in your browser.</p>
+
+                    <h3>💻 DiffuCoder-Instruct on MBPP</h3>
+                    <div class="demo-container diffucoder">
+                        <iframe src="assets/demos/diffucoder_base_mbpp_planners_interactive.html" title="DiffuCoder MBPP Interactive Demo"></iframe>
+                    </div>
+
+                    <h3>🧮 LLaDA-Base on GSM8K</h3>
+                    <div class="demo-container llada">
+                        <iframe src="assets/demos/llada_base_gsm8k_planners_interactive.html" title="LLaDA GSM8K Interactive Demo"></iframe>
+                    </div>
+                    <p><em>Note: Non-changing text represents post-EOS tokens unmasked by planners but not shown in the demo.</em></p>
+                </div>
+            </section>
+
+            <section id="benchmarks" class="scroll-animate">
+                <h2 style="text-align: center;">Benchmarks</h2>
+
+                <div class="content-block">
+                    <div class="examples-grid">
+                        <figure>
+                            <img src="assets/imgs/bench-mat-code.png" alt="Math and Code Benchmarks - DUS vs Self-Confidence">
+                            <figcaption>Performance comparison across math (GSM8K, MATH500) and code (HumanEval, MBPP) benchmarks</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </section>
+
+            <section id="bibtex" class="scroll-animate">
+                <h2 style="text-align: center;">BibTeX Citation</h2>
+                <div class="bibtex-section">
+                    <div class="bibtex" onclick="selectText(this)" title="Click to select citation">@article{luxembourg2025plan,
+    title={Plan for Speed: Dilated Scheduling for Masked Diffusion Language Models},
+    author={Luxembourg, Omer and Permuter, Haim and Nachmani, Eliya},
+    journal={arXiv preprint arXiv:2506.19037},
+    year={2025}
+}</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Function to calculate and set header height
+        function updateHeaderHeight() {
+            const header = document.querySelector('.paper-header');
+            if (header) {
+                const headerHeight = header.offsetHeight;
+                document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+            }
+        }
+
+        // Global animation state
+        let animationEnabled = true;
+
+        // Animation toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleCheckbox = document.getElementById('diffusion-toggle');
+            
+            if (toggleCheckbox) {
+                toggleCheckbox.addEventListener('change', function() {
+                    animationEnabled = this.checked;
+                    
+                    if (!animationEnabled) {
+                        // Disable all animations and show all text immediately
+                        document.querySelectorAll('.text-reveal').forEach(span => {
+                            span.style.animation = 'none';
+                            span.style.opacity = '1';
+                        });
+                        
+                        // Show any hidden text elements
+                        document.querySelectorAll('.paper-header:not(.animated) p, .paper-header:not(.animated) h1, .paper-header:not(.animated) h2, .paper-header:not(.animated) h3, .paper-header:not(.animated) .author strong, .paper-header:not(.animated) .author a, .paper-header:not(.animated) .affiliation-unified, .paper-header:not(.animated) .paper-link, #abstract:not(.animated) p, #abstract:not(.animated) h1, #abstract:not(.animated) h2, #abstract:not(.animated) h3, #abstract:not(.animated) .math-block, #abstract:not(.animated) figcaption, .scroll-animate:not(.animated) p, .scroll-animate:not(.animated) li, .scroll-animate:not(.animated) h1, .scroll-animate:not(.animated) h2, .scroll-animate:not(.animated) h3, .scroll-animate:not(.animated) .math-block, .scroll-animate:not(.animated) figcaption').forEach(el => {
+                            el.style.opacity = '1';
+                        });
+                    } else {
+                        // Re-enable animations - reset all sections to re-animate
+                        document.querySelectorAll('.paper-header, .scroll-animate').forEach(section => {
+                            // Reset animation state
+                            section.classList.remove('animated');
+                            
+                            // Reset text elements
+                            const textElements = section.querySelectorAll('p, li, h1, h2, h3, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link');
+                            textElements.forEach(element => {
+                                element.classList.remove('text-animated');
+                                element.style.opacity = '';
+                                // Restore original content if it was animated
+                                if (element.querySelector('.text-reveal')) {
+                                    // Check if we stored original HTML content
+                                    if (element.dataset.originalHtml) {
+                                        element.innerHTML = element.dataset.originalHtml;
+                                    } else {
+                                        // Fallback: reconstruct from text content
+                                        const originalText = Array.from(element.childNodes)
+                                            .map(node => node.textContent || node.nodeValue)
+                                            .join('');
+                                        element.innerHTML = '';
+                                        element.textContent = originalText;
+                                    }
+                                    delete element.dataset.originalHtml;
+                                }
+                            });
+                        });
+                        
+                        // Re-trigger animations for visible sections
+                        setTimeout(() => {
+                            // Re-animate header and abstract immediately
+                            const header = document.querySelector('.paper-header');
+                            const abstract = document.querySelector('#abstract');
+                            
+                            if (header) {
+                                header.classList.add('visible');
+                                header.classList.add('animated');
+                                animateText(header);
+                            }
+                            if (abstract) {
+                                abstract.classList.add('visible');
+                                abstract.classList.add('animated');
+                                animateText(abstract);
+                            }
+                            
+                            // Re-animate any other visible sections
+                            document.querySelectorAll('.scroll-animate').forEach(section => {
+                                const rect = section.getBoundingClientRect();
+                                const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+                                
+                                if (isVisible && !section.classList.contains('animated')) {
+                                    section.classList.add('visible');
+                                    section.classList.add('animated');
+                                    animateText(section);
+                                }
+                            });
+                        }, 100);
+                    }
+                });
+            }
+        });
+
+        // Loading screen and initial animations
+        window.addEventListener('load', function() {
+            // Calculate header height on page load
+            updateHeaderHeight();
+            
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) loadingEl.classList.add('hidden');
+            
+            // Only animate if animation is enabled
+            if (animationEnabled) {
+                // Animate header and abstract on page load
+                const header = document.querySelector('.paper-header');
+                const abstract = document.querySelector('#abstract');
+                
+                if (header) {
+                    header.classList.add('visible');
+                    header.classList.add('animated');
+                    animateText(header);
+                }
+                if (abstract) {
+                    abstract.classList.add('visible');
+                    abstract.classList.add('animated');
+                    animateText(abstract);
+                }
+            } else {
+                // Show all text immediately without animation
+                document.querySelectorAll('.paper-header, #abstract').forEach(section => {
+                    section.classList.add('visible');
+                    section.classList.add('animated');
+                    const textElements = section.querySelectorAll('p, li, h1, h2, h3, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link');
+                    textElements.forEach(el => {
+                        el.style.opacity = '1';
+                    });
+                });
+            }
+        });
+
+        // Update header height on window resize
+        window.addEventListener('resize', function() {
+            updateHeaderHeight();
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+                    entry.target.classList.add('visible');
+                    entry.target.classList.add('animated');
+                    
+                    if (animationEnabled) {
+                        animateText(entry.target);
+                    } else {
+                        // Show text immediately without animation
+                        const textElements = entry.target.querySelectorAll('p, li, h1, h2, h3, .math-block, figcaption, .author strong, .paper-link');
+                        textElements.forEach(el => {
+                            el.style.opacity = '1';
+                        });
+                    }
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.scroll-animate').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Text reveal animation function
+        function animateText(section) {
+            if (!animationEnabled) return;
+            
+            const textElements = section.querySelectorAll('p, li, h1, h2, h3, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link');
+            
+            // Check if this is the header section
+            const isHeaderSection = section.classList.contains('paper-header');
+            
+            // Collect all words from all elements
+            let allWords = [];
+            
+            textElements.forEach(element => {
+                if (element.classList.contains('text-animated')) return;
+                
+                // Store original HTML content before animation
+                element.dataset.originalHtml = element.innerHTML;
+                
+                // Make element visible immediately
+                element.style.opacity = '1';
+                element.classList.add('text-animated');
+                
+                // Special handling for elements with HTML content (like strong, em, math tags)
+                if (element.innerHTML.includes('<') || element.innerHTML.includes('$')) {
+                    // Skip animation for elements with HTML tags or math - just show them
+                    element.style.opacity = '1';
+                    return;
+                }
+                
+                // Regular text animation for plain text elements only
+                const text = element.textContent;
+                const words = text.split(/(\s+)/);
+                
+                element.innerHTML = '';
+                
+                words.forEach((word, index) => {
+                    if (word.trim()) {
+                        const span = document.createElement('span');
+                        span.className = 'text-reveal';
+                        span.textContent = word;
+                        element.appendChild(span);
+                        allWords.push(span);
+                    } else {
+                        element.appendChild(document.createTextNode(word));
+                    }
+                });
+            });
+            
+            // Shuffle the words array randomly
+            for (let i = allWords.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+            }
+            
+            // Apply random delays to shuffled words - use different duration for header
+            const durationVar = isHeaderSection ? '--animation-duration-header' : '--animation-duration';
+            const maxDelay = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(durationVar).replace('s', ''));
+            allWords.forEach((span, index) => {
+                const delayRatio = index / Math.max(allWords.length - 1, 1);
+                span.style.animationDelay = (delayRatio * maxDelay) + 's';
+                // Also set the animation duration for each span
+                if (isHeaderSection) {
+                    span.style.animationDuration = 'var(--animation-duration-header)';
+                }
+            });
+        }
+
+        // BibTeX selection
+        function selectText(element) {
+            if (window.getSelection) {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(element);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+
+        // Sidebar navigation active state and sticky behavior
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.paper-header');
+            const sidebar = document.querySelector('.sidebar-nav');
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.sidebar-nav a');
+            
+            // Handle sticky navigation
+            if (header && sidebar) {
+                const headerBottom = header.offsetTop + header.offsetHeight;
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                
+                if (scrollTop >= headerBottom) {
+                    sidebar.classList.add('sticky');
+                } else {
+                    sidebar.classList.remove('sticky');
+                }
+            }
+            
+            // Handle active navigation state
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.pageYOffset >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

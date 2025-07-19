@@ -1,0 +1,49 @@
+\begin{table}[t]
+\centering
+\caption{
+General knowledge (BBH, MMLU-pro) benchmarks for self-confidence (Conf.) and DUS (ours). Both are few-shot, COT, multiple-choices dataset on general topics from various fields. Tasks reported accuracy (\%) at block sizes $B=\{8,16,32,64\}$, with corresponding speedup factor $(\times)$.
+\textbf{Bold} marks better scores.}
+\setlength{\tabcolsep}{4.5pt}
+\small
+\begin{tabular}{l l *{2}{cc}}
+\toprule
+% 1) B sizes
+ & \multirow{3}{*}{\textbf{Model}}
+   % & \multicolumn{2}{c}{$B=8$}
+   & \multicolumn{2}{c}{$\textbf{B=16}$}
+   & \multicolumn{2}{c}{$\textbf{B=32}$}
+   % & \multicolumn{2}{c}{$B=64$}
+   \\
+% 2) ×‐rates
+ & 
+   % & \multicolumn{2}{c}{$\times2.7$}
+   & \multicolumn{2}{c}{$\times \textbf{4}$}
+   & \multicolumn{2}{c}{$\times\textbf{6.4}$}
+   % & \multicolumn{2}{c}{$\times10.7$} 
+   \\
+% 3) Conf. vs DUS
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}%\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+ & 
+   & Conf. & DUS & Conf. & DUS
+   % & Conf. & DUS & Conf. & DUS 
+   \\
+\midrule
+\multirow{2}{*}{\rotatebox[origin=c]{0}{{BBH}}}
+ & LLaDA–Base          & 40.93 & \textbf{41.48} & 35.93 & \textbf{40.56}  
+ \\
+ & LLaDA–Instruct      & 47.59 & \textbf{50.37} & 44.26 & \textbf{50.93} 
+ \\
+\midrule
+% now the data rows
+\multirow{2}{*}{\rotatebox[origin=c]{0}{{MMLU-Pro}}}
+ & LLaDA–Base          & 32.14 & \textbf{37.32} & 24.11 & \textbf{32.50}  
+ \\
+ & LLaDA–Instruct      & 25.71 & \textbf{34.64} & 31.07 & \textbf{34.64}  
+ \\
+\bottomrule
+\end{tabular}
+\label{tab:experiments_general}
+\end{table}
+
+
+
