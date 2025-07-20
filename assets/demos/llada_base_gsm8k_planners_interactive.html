@@ -29,7 +29,7 @@
             font-weight: bold;
             margin-bottom: 25px;
             color: #222;
-            background: #f0f0f0;
+            background: #e8f4fd;
             border-radius: 6px;
             padding: 15px 20px;
             line-height: 1.4;
@@ -49,6 +49,18 @@
             padding: 15px;
             /* min-height: 180px; */
             background: #fcfcfc;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        .planner.dus {
+            background: #e8f5e8;  /* Light green for DUS */
+        }
+        .planner.confidence {
+            background: #ffe8e8;  /* Light red for Self-Confidence */
+        }
+        .planner.confidence-1x {
+            background: #e8f4fd;  /* Light blue for Self-Confidence 1x */
         }
         .planner-title {
             text-align: center;
@@ -56,35 +68,76 @@
             font-size: 16px;
             margin-bottom: 10px;
             padding: 8px;
-            background-color: #f8f9fa;
+            background-color: #d4e6d4;
             border-radius: 4px;
+            font-family: Arial, sans-serif;
+        }
+        .planner.confidence .planner-title {
+            background-color: #f0d4d4;
+        }
+        .planner.confidence-1x .planner-title {
+            background-color: #d4e6f0;  /* Darker blue for Self-Confidence 1x header */
         }
         .answer-label {
             font-size: 13px;
             color: #666;
             margin-bottom: 8px;
             text-align: center;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
         }
         .tokens-container {
             font-size: 14px;
             line-height: 1.6;
             min-height: 80px;
-            text-align: justify;
+            text-align: left;
             font-family: 'Courier New', monospace; 
             white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            word-break: break-word;
+            flex: 1;
+            overflow: hidden;
+            font-weight: bold;
         }
         .token {
             transition: all 0.3s ease;
         }
         .token.hidden {
-            color: #f0f0f0;
-            background-color: #f0f0f0;
             user-select: none;
             border-radius: 2px;
+        }
+        .planner.dus .token.hidden {
+            color: #c0d9c0;
+            background-color: #c0d9c0;
+        }
+        .planner.confidence .token.hidden {
+            color: #e6c0c0;
+            background-color: #e6c0c0;
+        }
+        .planner.confidence-1x .token.hidden {
+            color: #c0d9e6;
+            background-color: #c0d9e6;
         }
         .token.revealed {
             color: black;
             background-color: transparent;
+        }
+        .token.revealed.garbage {
+            border-radius: 2px;
+        }
+        .planner.dus .token.revealed.garbage {
+            color: #7a9e7a;
+            background-color: #d9ead9;
+        }
+        .planner.confidence .token.revealed.garbage {
+            color: #cc7a7a;
+            background-color: #f2d9d9;
+        }
+        .planner.confidence-1x .token.revealed.garbage {
+            color: #7a9ecc;
+            background-color: #d9eaf2;
         }
         .correctness-indicator {
             text-align: center;
@@ -119,11 +172,11 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            background-color: #007bff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
         .controls button:hover {
-            background-color: #0056b3;
+            background: linear-gradient(135deg, #5a32a3 0%, #6b4190 100%);
         }
         .controls button:disabled {
             background-color: #ccc;
@@ -148,19 +201,19 @@
 Answer:</div>
         
         <div class="planners-container">
-            <div class="planner" id="planner0">
+            <div class="planner confidence-1x" id="planner0">
                 <div class="planner-title">(a) Self-Confidence (1x)</div>
                 <div class="answer-label">Generated Text:</div>
                 <div class="tokens-container" id="tokens0"></div>
                 <div class="correctness-indicator" id="correctness-0"></div>
             </div>
-            <div class="planner" id="planner1">
+            <div class="planner dus" id="planner1">
                 <div class="planner-title">(b) DUS (6.4x)</div>
                 <div class="answer-label">Generated Text:</div>
                 <div class="tokens-container" id="tokens1"></div>
                 <div class="correctness-indicator" id="correctness-1"></div>
             </div>
-            <div class="planner" id="planner2">
+            <div class="planner confidence" id="planner2">
                 <div class="planner-title">(c) Self-Confidence (6.4x)</div>
                 <div class="answer-label">Generated Text:</div>
                 <div class="tokens-container" id="tokens2"></div>

@@ -675,10 +675,6 @@ tr:hover td {
 }
 
 /* Animation utility classes */
-.fade-in {
-    animation: fadeIn var(--animation-duration) var(--animation-ease-smooth) forwards;
-}
-
 .slide-up {
     animation: slideUp var(--animation-duration) var(--animation-ease-smooth) forwards;
 }
@@ -688,11 +684,6 @@ tr:hover td {
 }
 
 /* Additional keyframes for utility classes */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
 @keyframes slideUp {
     from { 
         opacity: 0; 
@@ -719,33 +710,29 @@ tr:hover td {
     }
 }
 
-/* Text reveal animation */
+/* Text reveal animation - diffusion effect only, no fade-in */
 .text-reveal {
     display: inline-block;
-    opacity: 0;
-    animation: revealText var(--animation-duration) ease-out forwards;
+    opacity: 1; /* Always visible - no fade-in */
 }
 
 @keyframes revealText {
     0% {
-        opacity: 0;
-    }
-    99.99% {
-        opacity: 0;
+        opacity: 1; /* Start visible */
     }
     100% {
-        opacity: 1;
+        opacity: 1; /* Stay visible */
     }
 }
 
 /* Initially hide text elements that will be animated - but only when they haven't been processed yet */
-.paper-header:not(.animated) p, .paper-header:not(.animated) h1, .paper-header:not(.animated) h2, .paper-header:not(.animated) h3, 
+.paper-header:not(.animated) p, .paper-header:not(.animated) h1, .paper-header:not(.animated) h2, .paper-header:not(.animated) h3, .paper-header:not(.animated) h4,
 .paper-header:not(.animated) .author strong, .paper-header:not(.animated) .author a, .paper-header:not(.animated) .affiliation-unified, .paper-header:not(.animated) .paper-link,
-#abstract:not(.animated) p, #abstract:not(.animated) h1, #abstract:not(.animated) h2, #abstract:not(.animated) h3, 
+#abstract:not(.animated) p, #abstract:not(.animated) h1, #abstract:not(.animated) h2, #abstract:not(.animated) h3, #abstract:not(.animated) h4,
 #abstract:not(.animated) .math-block, #abstract:not(.animated) figcaption,
-.scroll-animate:not(.animated) p, .scroll-animate:not(.animated) li, .scroll-animate:not(.animated) h1, 
-.scroll-animate:not(.animated) h2, .scroll-animate:not(.animated) h3, .scroll-animate:not(.animated) .math-block, 
-.scroll-animate:not(.animated) figcaption {
+.scroll-animate:not(.animated) p, .scroll-animate:not(.animated) li, .scroll-animate:not(.animated) ul, .scroll-animate:not(.animated) ol, .scroll-animate:not(.animated) h1, 
+.scroll-animate:not(.animated) h2, .scroll-animate:not(.animated) h3, .scroll-animate:not(.animated) h4, .scroll-animate:not(.animated) .math-block, 
+.scroll-animate:not(.animated) figcaption, .scroll-animate:not(.animated) strong {
     opacity: 0;
 }
 

@@ -246,7 +246,7 @@
                             section.classList.remove('animated');
                             
                             // Reset text elements
-                            const textElements = section.querySelectorAll('p, li, h1, h2, h3, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link');
+                            const textElements = section.querySelectorAll('p, li, ul, ol, h1, h2, h3, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link, strong');
                             textElements.forEach(element => {
                                 element.classList.remove('text-animated');
                                 element.style.opacity = '';
@@ -331,7 +331,7 @@
                 document.querySelectorAll('.paper-header, #abstract').forEach(section => {
                     section.classList.add('visible');
                     section.classList.add('animated');
-                    const textElements = section.querySelectorAll('p, li, h1, h2, h3, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link');
+                    const textElements = section.querySelectorAll('p, li, ul, ol, h1, h2, h3, h4, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link, strong');
                     textElements.forEach(el => {
                         el.style.opacity = '1';
                     });
@@ -374,7 +374,7 @@
                         animateText(entry.target);
                     } else {
                         // Show text immediately without animation
-                        const textElements = entry.target.querySelectorAll('p, li, h1, h2, h3, .math-block, figcaption, .author strong, .paper-link');
+                        const textElements = entry.target.querySelectorAll('p, li, ul, ol, h1, h2, h3, h4, .math-block, figcaption, .author strong, .paper-link, strong');
                         textElements.forEach(el => {
                             el.style.opacity = '1';
                         });
@@ -391,7 +391,7 @@
         function animateText(section) {
             if (!animationEnabled) return;
             
-            const textElements = section.querySelectorAll('p, li, h1, h2, h3, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link');
+            const textElements = section.querySelectorAll('p, li, ul, ol, h1, h2, h3, h4, .math-block, figcaption, .author strong, .author a, .affiliation-unified, .paper-link, strong');
             
             // Check if this is the header section
             const isHeaderSection = section.classList.contains('paper-header');
@@ -409,14 +409,21 @@
                 element.style.opacity = '1';
                 element.classList.add('text-animated');
                 
-                // Special handling for elements with HTML content (like strong, em, math tags)
-                if (element.innerHTML.includes('<') || element.innerHTML.includes('$')) {
-                    // Skip animation for elements with HTML tags or math - just show them
-                    element.style.opacity = '1';
+                // Handle elements with complex HTML content (math, links, etc.)
+                if (element.innerHTML.includes('<strong>') || element.innerHTML.includes('<em>') || 
+                    element.innerHTML.includes('<a>') || element.innerHTML.includes('$$') ||
+                    element.innerHTML.includes('$') || element.classList.contains('math-block')) {
+                    
+                    // For elements with HTML tags, treat as single unit but hide initially
+                    element.style.opacity = '0';
+                    allWords.push({
+                        element: element,
+                        isComplexElement: true
+                    });
                     return;
                 }
                 
-                // Regular text animation for plain text elements only
+                // Regular text animation for plain text elements
                 const text = element.textContent;
                 const words = text.split(/(\s+)/);
                 
@@ -427,30 +434,34 @@
                         const span = document.createElement('span');
                         span.className = 'text-reveal';
                         span.textContent = word;
+                        span.style.opacity = '0'; // Start hidden for diffusion effect
                         element.appendChild(span);
-                        allWords.push(span);
+                        allWords.push({
+                            element: span,
+                            isComplexElement: false
+                        });
                     } else {
                         element.appendChild(document.createTextNode(word));
                     }
                 });
             });
             
-            // Shuffle the words array randomly
+            // Shuffle the words array randomly for diffusion effect
             for (let i = allWords.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
             }
             
-            // Apply random delays to shuffled words - use different duration for header
-            const durationVar = isHeaderSection ? '--animation-duration-header' : '--animation-duration';
-            const maxDelay = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(durationVar).replace('s', ''));
-            allWords.forEach((span, index) => {
+            // Apply random delays for diffusion effect - words appear instantly but at different times
+            const maxDelay = isHeaderSection ? 0.5 : 1.0; // Faster for headers
+            allWords.forEach((item, index) => {
                 const delayRatio = index / Math.max(allWords.length - 1, 1);
-                span.style.animationDelay = (delayRatio * maxDelay) + 's';
-                // Also set the animation duration for each span
-                if (isHeaderSection) {
-                    span.style.animationDuration = 'var(--animation-duration-header)';
-                }
+                const delay = delayRatio * maxDelay;
+                
+                // Set timeout to show each word/element instantly at its scheduled time
+                setTimeout(() => {
+                    item.element.style.opacity = '1';
+                }, delay * 1000);
             });
         }
 
