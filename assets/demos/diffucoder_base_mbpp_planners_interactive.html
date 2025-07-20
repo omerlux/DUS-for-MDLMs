@@ -185,12 +185,61 @@
         .speed-control {
             margin-bottom: 15px;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         .speed-control label {
-            margin-right: 10px;
+            font-weight: bold;
+            min-width: 140px;
+            text-align: right;
         }
-        .speed-control input {
+        .speed-control #speedValue,
+        .speed-control #frameValue {
+            min-width: 30px;
+            text-align: left;
+            font-weight: bold;
+        }
+        .speed-control input[type="range"] {
             width: 100px;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+        }
+        .speed-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .speed-control input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .speed-control input[type="range"]::-webkit-slider-track {
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+        }
+        .speed-control input[type="range"]::-moz-range-track {
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            border: none;
         }
     </style>
 </head>
@@ -245,6 +294,7 @@ assert multiples_of_num(9,2)== [2,4,6,8,10,12,14,16,18]
         <div class="speed-control">
             <label for="frameSlider">NFE:</label>
             <input type="range" id="frameSlider" min="0" max="48" step="1" value="0">
+            <span id="frameValue">0</span>
         </div>
     </div>
     <script>
@@ -461,6 +511,7 @@ assert multiples_of_num(9,2)== [2,4,6,8,10,12,14,16,18]
         const speedSlider = document.getElementById('speedSlider');
         const speedValue = document.getElementById('speedValue');
         const frameSlider = document.getElementById('frameSlider');
+        const frameValue = document.getElementById('frameValue');
         function initializeTokens() {
             for (let plannerIdx = 0; plannerIdx < 3; plannerIdx++) {
                 const container = document.getElementById(`tokens${plannerIdx}`);
@@ -478,6 +529,7 @@ assert multiples_of_num(9,2)== [2,4,6,8,10,12,14,16,18]
             currentFrame = frame;
             currentFrameSpan.textContent = frame;
             frameSlider.value = frame;
+            frameValue.textContent = frame;
             for (let plannerIdx = 0; plannerIdx < 3; plannerIdx++) {
                 const stages = plannersData[plannerIdx].stages;
                 const container = document.getElementById(`tokens${plannerIdx}`);
@@ -547,9 +599,19 @@ assert multiples_of_num(9,2)== [2,4,6,8,10,12,14,16,18]
         stepBtn.addEventListener('click', step);
         speedSlider.addEventListener('input', (e) => {
             speedValue.textContent = e.target.value;
+            // Don't restart animation automatically, just update the speed value
+            // Animation will use new speed on next play/resume
+        });
+        
+        // Handle speed changes more smoothly
+        speedSlider.addEventListener('change', (e) => {
             if (isPlaying) {
+                // Only restart if actually playing to avoid jumps
+                const wasPlaying = isPlaying;
                 pause();
-                play(); // Restart with new speed
+                if (wasPlaying) {
+                    play(); // Restart with new speed
+                }
             }
         });
         
