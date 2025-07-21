@@ -145,7 +145,7 @@
 
                     <h4>3. Entropy-Bound Justification</h4>
                     <p>Denote by $s_t$ the current partial state at iteration $t$ (i.e., which tokens have already been revealed and which remain masked). Under a <strong>one-order fast-mixing Markov chain</strong> on token positions, non-adjacent tokens exhibit negligible mutual information, so</p>
-                    $$H(x_{C_k} | s_t) \leq \sum_{i \in C_k} H(x_i | s_t)$$
+                    $$H(x_{C_k} | s_t) \approx \sum_{i \in C_k} H(x_i | s_t)$$
                     <p>Hence, grouping <strong>non-adjacent</strong> tokens in each $C_k$ <strong>controls the maximum quality loss</strong> per unmasking step.</p>
 
                     <h4>4. Speed–Quality Trade-off</h4>
